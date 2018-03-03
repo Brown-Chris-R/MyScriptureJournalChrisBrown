@@ -1,0 +1,84 @@
+﻿@{
+    Layout = "~/styles/_Layout.cshtml";
+    Page.Title = "My Scripture Journal | Add Journal";
+
+    Validation.RequireField("book", "You must enter a book");
+    Validation.RequireField("chapter", "chapter is required");
+    Validation.RequireField("verse", "verse is required");
+    Validation.RequireField("verseText", "The verse text is required");
+    Validation.RequireField("note", "A note is required");
+
+    var book = "";
+    var chapter = 0;
+    var verse = 0;
+    var verseText = "";
+    var note = "";
+    var dateAdded = DateTime.Now.ToString();
+
+    if (IsPost && Validation.IsValid())
+    {
+        book = Request.Form["book"];
+        chapter = Request.Form["chapter"].AsInt();
+        verse = Request.Form["verse"].AsInt();
+        verseText = Request.Form["verseText"];
+        note = Request.Form["note"];
+
+        var db = Database.Open("MyScriptureJournal");
+        var insertCommand = "INSERT INTO Journal (Book, Chapter, Verse, VerseText, Note, DateAdded) Values(@0, @1, @2, @3, @4, @5)";
+        db.Execute(insertCommand, book, chapter, verse, verseText, note, dateAdded);
+        Response.Redirect("~/Default");
+    }
+}
+    <article class="row" id="add-journal">
+        <section class="col-md-12">
+            <h3 class="headline">Add a Journal</h3>
+            <hr>
+            @Html.ValidationSummary()
+
+            <form method="post" class="col-md-5 offset-md-0">
+                <fieldset>
+                    <section class="form-group">
+                        <span class="has-float-label">
+                            <label for="book">Book:</label>
+                            <input type="text" class="form-control" id="book" name="book" value="@Request.Form["book"]" placeholder="Book">
+                            @Html.ValidationMessage("book")
+                        </span>
+                    </section>
+
+                    <section class="form-group">
+                        <span class="has-float-label">
+                            <label for="chapter">Chapter:</label>
+                            <input type="number" class="form-control" id="chapter" name="chapter" value="@Request.Form["chapter"]" placeholder="Chapter">
+                            @Html.ValidationMessage("chapter")
+                        </span>
+                    </section>
+
+                    <section class="form-group">
+                        <span class="has-float-label">
+                            <label for="verse">Verse:</label>
+                            <input type="number" class="form-control" id="verse" name="verse" value="@Request.Form["verse"]" placeholder="Verse">
+                            @Html.ValidationMessage("verse")
+                        </span>
+                    </section>
+
+                    <section class="form-group">
+                        <span class="has-float-label">
+                            <label for="verseText">Verse Text:</label>
+                            <textarea class="form-control" id="verseText" name="verseText" rows="3">@Request.Form["verseText"]</textarea>
+                            @Html.ValidationMessage("verseText")
+                        </span>
+                    </section>
+
+                    <section class="form-group">
+                        <span class="has-float-label">
+                            <label for="note">Note:</label>
+                            <textarea class="form-control" id="note" name="note" rows="3">@Request.Form["note"]</textarea>
+                            @Html.ValidationMessage("note")
+                        </span>
+                    </section>
+
+                    <p><input type="submit" name="buttonSubmit" value="Add Journal"></p>
+                </fieldset>
+            </form>
+        </section>
+    </article>

@@ -1,0 +1,93 @@
+﻿@{
+    Layout = "~/styles/_Layout.cshtml";
+    Page.Title = "My Scripture Journal";
+
+    var db = Database.Open("MyScriptureJournal");
+    var selectCommand = "SELECT * FROM Journal";
+
+    System.Collections.Generic.IEnumerable<Object> selectedData;
+    var searchBook = "";
+    var searchKeyword = "";
+    var searchKeyword1 = "";
+
+    if (!Request.QueryString["searchBook"].IsEmpty())
+    {
+        if (!Request.QueryString["searchKeyword"].IsEmpty())
+        {
+            selectCommand = "SELECT * FROM Journal WHERE Book = @0 AND (VerseText LIKE @1 OR Note LIKE @1)";
+            searchBook = Request.QueryString["searchBook"];
+            searchKeyword = "%" + Request["searchKeyword"] + "%";
+            searchKeyword1 = searchKeyword;
+            selectedData = db.Query(selectCommand, searchBook, searchKeyword);
+        }
+        else
+        {
+            selectCommand = "SELECT * FROM Journal WHERE Book = @0";
+            searchBook = Request.QueryString["searchBook"];
+            selectedData = db.Query(selectCommand, searchBook);
+
+        }
+    }
+    else
+    {
+        if (!Request.QueryString["searchKeyword"].IsEmpty())
+        {
+            selectCommand = "SELECT * FROM Journal WHERE (VerseText LIKE @0 OR Note LIKE @0)";
+            searchKeyword = "%" + Request["searchKeyword"] + "%";
+            searchKeyword1 = searchKeyword;
+            selectedData = db.Query(selectCommand, searchKeyword);
+        }
+        else
+        {
+            selectedData = db.Query(selectCommand);
+        }
+
+    }
+
+    var grid = new WebGrid(source: selectedData, defaultSort: "DateAdded", rowsPerPage: 5);
+    // Force a descending sort only when no user specified sort is present
+    if (Request.QueryString[grid.SortDirectionFieldName].IsEmpty())
+    {
+        grid.SortDirection = SortDirection.Descending;
+    }
+
+}
+    <article class="row" id="main-page">
+        <section class="col-md-12">
+            <h3 class="headline">Journal List</h3>
+            <hr>
+
+            <section class="container-fluid">
+                <form method="get" class="pb-3">
+                    <div class="form-group has-float-label">
+                        <label for="searchBook">Book to look for:</label>
+                        <input type="text" class="form-control" id="searchBook" name="searchBook" value="@Request.QueryString["searchBook"]" placeholder="Enter Book Search">
+                    </div>
+                    <div class="form-group has-float-label">
+                        <label for="searchKeyword">Journal contains the following keyword:</label>
+                        <input type="text" class="form-control" id="searchKeyword" name="searchKeyword" value="@Request.QueryString["searchKeyword"]" placeholder="Search Keyword">
+                        <small id="searchHelp" class="form-text text-muted">(Leave blank to list all journals.)</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+                <!--Row with two columns divided in 1:3 ratio-->
+                <section class="table-responsive">
+                    @grid.GetHtml(
+                                tableStyle: "table table-sm table-striped table-hover",
+                                headerStyle: "thead-light",
+                                alternatingRowStyle: "alt",
+                                footerStyle: "pagination pagination-circle pg-blue",
+                                columns: grid.Columns(
+                                grid.Column(format: @<a href="~/EditJournal?id=@item.ID">Edit</a>),
+                                grid.Column("Book"),
+                                grid.Column("Chapter", canSort: false),
+                                grid.Column("Verse", canSort: false),
+                                  grid.Column(columnName: "DateAdded", header: "Date Added", format: @<a href="~/ViewJournal?id=@item.ID">@item.DateAdded</a>, canSort: true),
+                                  grid.Column(format: @<a href="~/DeleteJournal?id=@item.ID">Delete</a>)
+)
+)
+
+                </section>
+            </section>
+        </section>
+    </article>
